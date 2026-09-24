@@ -1,0 +1,14 @@
+name: Saldo
+options:
+  bundleIdPrefix: com.saldo
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Saldo:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    settings:
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      PRODUCT_BUNDLE_IDENTIFIER: com.saldo.debttracker
