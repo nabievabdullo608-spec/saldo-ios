@@ -1,0 +1,91 @@
+# Инструкция: Сборка нативного .IPA без Mac через GitHub Actions (100% бесплатно)
+
+### 1. Структура вашего репозитория на GitHub:
+```
+my-saldo-app/
+├── project.yml                     # Конфигурация проекта для сборки
+├── Sources/
+│   └── App.swift                   # Весь нативный код Swift/SwiftUI
+└── .github/
+    └── workflows/
+        └── build-ipa.yml           # Автоматическая сборка в облаке Apple Mac
+```
+
+---
+
+### 2. Содержимое файла `project.yml`:
+```yaml
+name: Saldo
+options:
+  bundleIdPrefix: com.saldo
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Saldo:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    settings:
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      PRODUCT_BUNDLE_IDENTIFIER: com.saldo.debttracker
+```
+
+---
+
+### 3. Содержимое файла `.github/workflows/build-ipa.yml`:
+```yaml
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode Project
+      run: xcodegen generate
+
+    - name: Build Application Archive
+      run: |
+        xcodebuild -project Saldo.xcodeproj \
+          -scheme Saldo \
+          -configuration Release \
+          -destination 'generic/platform=iOS' \
+          -archivePath build/Saldo.xcarchive \
+          archive \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO
+
+    - name: Package unsigned IPA
+      run: |
+        mkdir -p Payload
+        cp -r build/Saldo.xcarchive/Products/Applications/Saldo.app Payload/
+        zip -r Saldo.ipa Payload
+        rm -rf Payload
+
+    - name: Upload IPA Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Saldo-IPA
+        path: Saldo.ipa
+```
+
+---
+
+### 4. Как запустить сборку:
+1. Создайте бесплатный репозиторий на GitHub (например, `saldo-ios`).
+2. Добавьте код приложения в `Sources/App.swift`, положите `project.yml` и `.github/workflows/build-ipa.yml`.
+3. Сделайте `git push`.
+4. Перейдите во вкладку **Actions** на GitHub — там запустится виртуальный сервер Apple macOS, который скомпилирует Swift и создаст готовый файл **Saldo.ipa** для скачивания.
+
